@@ -3,6 +3,8 @@ import { registry } from './registry'
 
 // Import each module's OpenAPI registration here.
 import '../modules/health/health.openapi'
+import '../modules/content/content.openapi'
+import '../modules/users/users.openapi'
 
 export function buildOpenApiDocument() {
   return new OpenApiGeneratorV31(registry.definitions).generateDocument({

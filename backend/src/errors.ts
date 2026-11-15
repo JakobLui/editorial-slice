@@ -14,3 +14,21 @@ export class NotFoundError extends AppError {
     super(404, message)
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Not signed in') {
+    super(401, message)
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Not allowed') {
+    super(403, message)
+  }
+}
+
+export class BadRequestError extends AppError {
+  constructor(message = 'Bad request') {
+    super(400, message)
+  }
+}

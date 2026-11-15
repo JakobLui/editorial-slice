@@ -5,6 +5,14 @@
     "version": "1.0.0"
   },
   "components": {
+    "securitySchemes": {
+      "devUser": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-User-Id",
+        "description": "Development stand-in for real auth: the id of the acting user."
+      }
+    },
     "schemas": {
       "HealthResponse": {
         "type": "object",
@@ -28,6 +36,480 @@
           "status",
           "database"
         ]
+      },
+      "ContentBoard": {
+        "type": "object",
+        "properties": {
+          "idea": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentItemSummary"
+            }
+          },
+          "draft": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentItemSummary"
+            }
+          },
+          "review": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentItemSummary"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True when the board hit its item cap and some items are left out."
+          }
+        },
+        "required": [
+          "idea",
+          "draft",
+          "review",
+          "truncated"
+        ]
+      },
+      "ContentItemSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "draftUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserRef"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRef"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "allowed": {
+            "$ref": "#/components/schemas/AllowedActions"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "type",
+          "deadline",
+          "draftUrl",
+          "createdBy",
+          "authors",
+          "createdAt",
+          "updatedAt",
+          "publishedAt",
+          "archivedAt",
+          "allowed"
+        ]
+      },
+      "ContentStatus": {
+        "type": "string",
+        "enum": [
+          "idea",
+          "draft",
+          "review",
+          "published"
+        ]
+      },
+      "ContentType": {
+        "type": "string",
+        "enum": [
+          "article",
+          "newsletter",
+          "podcast",
+          "video"
+        ]
+      },
+      "UserRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AllowedActions": {
+        "type": "object",
+        "properties": {
+          "edit": {
+            "type": "boolean",
+            "description": "Edit fields; change status among Idea, Draft and Review."
+          },
+          "publish": {
+            "type": "boolean",
+            "description": "Move the item into or out of published."
+          },
+          "assignAuthors": {
+            "type": "boolean",
+            "description": "Add or remove any author."
+          },
+          "removeSelf": {
+            "type": "boolean",
+            "description": "Take oneself off the authors list."
+          },
+          "archive": {
+            "type": "boolean",
+            "description": "Archive and restore."
+          }
+        },
+        "required": [
+          "edit",
+          "publish",
+          "assignAuthors",
+          "removeSelf",
+          "archive"
+        ],
+        "description": "What the current user may do with the item. The API enforces the same rules."
+      },
+      "ContentPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentItemSummary"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "ContentItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "draftUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserRef"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRef"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "allowed": {
+            "$ref": "#/components/schemas/AllowedActions"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/Brief"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "type",
+          "deadline",
+          "draftUrl",
+          "createdBy",
+          "authors",
+          "createdAt",
+          "updatedAt",
+          "publishedAt",
+          "archivedAt",
+          "allowed",
+          "brief"
+        ]
+      },
+      "Brief": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "doc"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": {},
+        "description": "A Tiptap document (JSON)."
+      },
+      "CreateContent": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "idea",
+              "draft",
+              "review"
+            ],
+            "default": "idea"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/Brief"
+          },
+          "draftUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "authorIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ]
+      },
+      "UpdateContent": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "$ref": "#/components/schemas/ContentType"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/Brief"
+          },
+          "draftUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "authorIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The full new list of authors. It replaces the current list."
+          }
+        }
+      },
+      "UpdateContentStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "editor",
+              "contributor"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ]
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "editor",
+              "contributor"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "content:read:any",
+                "content:read:own",
+                "content:update:any",
+                "content:update:own",
+                "content:assign:any",
+                "content:assign:own",
+                "content:archive:any",
+                "content:archive:own",
+                "content:publish"
+              ]
+            },
+            "description": "What the role allows in general. Per item, use the item's `allowed` flags."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "permissions"
+        ]
       }
     },
     "parameters": {}
@@ -49,6 +531,624 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/content/board": {
+      "get": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "getContentBoard",
+        "summary": "Work in progress (Idea, Draft, Review), grouped by status",
+        "description": "Unpaginated, capped at 500 items. Each column is sorted by deadline, items without one last. Role scope always applies.",
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentType"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContentType"
+                  }
+                }
+              ]
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "authorId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The board.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentBoard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          }
+        }
+      }
+    },
+    "/api/content": {
+      "get": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "listContent",
+        "summary": "Content items with filters, search, sorting and pagination",
+        "description": "Filters combine with AND, inside the role scope. `archived=true` returns only archived items.",
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentStatus"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContentStatus"
+                  }
+                }
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentType"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContentType"
+                  }
+                }
+              ]
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "authorId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "createdById",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "deadlineFrom",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "deadlineTo",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "publishedFrom",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "publishedTo",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            },
+            "required": false,
+            "name": "archived",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "deadline",
+                "createdAt",
+                "updatedAt",
+                "publishedAt",
+                "title"
+              ],
+              "default": "deadline"
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "createContent",
+        "summary": "Create a content item; the current user becomes its creator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The content item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          }
+        }
+      }
+    },
+    "/api/content/{id}": {
+      "get": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "getContent",
+        "summary": "One content item, archived or not, with its brief",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The content item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          },
+          "404": {
+            "description": "No such item, or the user may not see it."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "updateContent",
+        "summary": "Edit fields and authors (not status)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The content item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          },
+          "403": {
+            "description": "The user may not do this."
+          },
+          "404": {
+            "description": "No such item, or the user may not see it."
+          },
+          "409": {
+            "description": "The item is archived. Restore it first."
+          }
+        }
+      }
+    },
+    "/api/content/{id}/status": {
+      "patch": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "updateContentStatus",
+        "summary": "Change the status; only editors move items into or out of published",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContentStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The content item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          },
+          "403": {
+            "description": "The user may not do this."
+          },
+          "404": {
+            "description": "No such item, or the user may not see it."
+          },
+          "409": {
+            "description": "The item is archived. Restore it first."
+          }
+        }
+      }
+    },
+    "/api/content/{id}/archive": {
+      "post": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "archiveContent",
+        "summary": "Archive (soft delete) an item",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The item is archived."
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          },
+          "403": {
+            "description": "The user may not do this."
+          },
+          "404": {
+            "description": "No such item, or the user may not see it."
+          }
+        }
+      }
+    },
+    "/api/content/{id}/restore": {
+      "post": {
+        "tags": [
+          "content"
+        ],
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "operationId": "restoreContent",
+        "summary": "Restore an archived item",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The item is restored."
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          },
+          "403": {
+            "description": "The user may not do this."
+          },
+          "404": {
+            "description": "No such item, or the user may not see it."
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "listUsers",
+        "tags": [
+          "users"
+        ],
+        "summary": "All users, for picking authors",
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users sorted by name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No user, or an unknown user."
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "users"
+        ],
+        "summary": "The signed-in user, with their role and permissions",
+        "security": [
+          {
+            "devUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The signed-in user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No user, or an unknown user."
           }
         }
       }
