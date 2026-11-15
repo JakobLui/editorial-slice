@@ -124,7 +124,10 @@ export const CONTENT_SORTS = [
   'createdAt',
   'updatedAt',
   'publishedAt',
+  'archivedAt',
   'title',
+  'type',
+  'status',
 ] as const
 
 export const listQuerySchema = z.object({

@@ -19,14 +19,23 @@ export async function seedIfEmpty(dataSource: DataSource) {
 }
 
 async function seed(manager: EntityManager) {
+  // Fixed ids: the frontend's development user switcher lists the same ids
+  // (frontend/src/api/dev-users.ts). Both go away with the auth module.
   const [editor, jonas, sara] = await manager.save(User, [
-    { name: 'Mette Hansen', email: 'mette@frihedsbrevet.test', role: 'editor' },
     {
+      id: '01960000-0000-7000-8000-000000000001',
+      name: 'Mette Hansen',
+      email: 'mette@frihedsbrevet.test',
+      role: 'editor',
+    },
+    {
+      id: '01960000-0000-7000-8000-000000000002',
       name: 'Jonas Nielsen',
       email: 'jonas@frihedsbrevet.test',
       role: 'contributor',
     },
     {
+      id: '01960000-0000-7000-8000-000000000003',
       name: 'Sara Larsen',
       email: 'sara@frihedsbrevet.test',
       role: 'contributor',

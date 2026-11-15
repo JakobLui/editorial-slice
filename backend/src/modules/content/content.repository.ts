@@ -16,7 +16,12 @@ export const SORT_COLUMNS = {
   createdAt: 'item.createdAt',
   updatedAt: 'item.updatedAt',
   publishedAt: 'item.publishedAt',
+  archivedAt: 'item.archivedAt',
   title: 'item.title',
+  type: 'item.type',
+  // Workflow order, not alphabetical: Idea, Draft, Review, Published.
+  status:
+    "CASE item.status WHEN 'idea' THEN 0 WHEN 'draft' THEN 1 WHEN 'review' THEN 2 ELSE 3 END",
 } as const
 
 type Filters = Partial<

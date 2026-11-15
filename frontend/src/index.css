@@ -15,6 +15,7 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -22,6 +23,8 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -55,7 +58,12 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Frihedsbrevet's colours: black, with orange as the accent. Orange is too
+     light for text on white, so it is used for fills (with black text),
+     focus rings and markers. */
+  --brand: #ff7333;
+  --brand-foreground: #000000;
+  --primary: #000000;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -66,21 +74,29 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
+  /*
+   * A light grey sidebar, clearly set apart from the white page by its tint
+   * and a border. Text on it meets WCAG AA (4.5:1): the muted shade is darker
+   * than the page's, because grey-on-grey loses contrast. The active item is
+   * a flat darker grey with the orange bar and medium weight; hover (inactive
+   * items only) is a lighter step of the same grey (see app-sidebar.tsx).
+   */
+  --sidebar: oklch(0.955 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-muted-foreground: oklch(0.46 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.915 0 0);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
+  --sidebar-border: oklch(0.87 0 0);
+  --sidebar-ring: var(--brand);
 }
 
 .dark {
@@ -124,7 +140,61 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind 4 leaves buttons on the default cursor; anything clickable gets the pointer. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
   html {
     @apply font-sans;
+  }
+}
+
+/* The Tiptap brief: basic rich-text styles (no typography plugin). */
+.tiptap > * + * {
+  margin-top: 0.5rem;
+}
+.tiptap h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.tiptap ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.tiptap ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.tiptap blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/*
+ * Scale the whole UI on large screens. Tailwind sizes text, spacing and
+ * controls in rem, so the root font size enlarges everything together.
+ */
+@media (min-width: 1920px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+@media (min-width: 2560px) {
+  html {
+    font-size: 125%;
+  }
+}
+@media (min-width: 3840px) {
+  html {
+    font-size: 150%;
   }
 }

@@ -740,7 +740,10 @@
                 "createdAt",
                 "updatedAt",
                 "publishedAt",
-                "title"
+                "archivedAt",
+                "title",
+                "type",
+                "status"
               ],
               "default": "deadline"
             },
