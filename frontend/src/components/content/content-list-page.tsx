@@ -218,18 +218,23 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
           <Table
             aria-busy={isRefreshing}
             className={cn(
-              'min-w-[64rem] table-fixed transition-opacity',
+              'min-w-[52rem] table-fixed transition-opacity',
               isRefreshing && 'opacity-60',
             )}
           >
+            {/*
+              Each fixed column is as wide as its longest value needs
+              ("Published", "Newsletter", a date, three avatars, a name,
+              "Unpublish" plus ⋯); the title gets everything else.
+            */}
             <colgroup>
               <col />
-              <col className="w-32" />
-              <col className="w-36" />
-              <col className="w-36" />
               <col className="w-28" />
-              <col className="w-40" />
-              <col className="w-44" />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col className="w-24" />
+              <col className="w-36" />
+              <col className="w-36" />
             </colgroup>
             <TableHeader className="bg-muted/40">
               <TableRow className="hover:bg-transparent">
@@ -266,8 +271,12 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
                     onSort={sortBy}
                   />
                 )}
-                <TableHead className={HEADER_TEXT}>Authors</TableHead>
-                <TableHead className={HEADER_TEXT}>Created by</TableHead>
+                <TableHead className={cn('truncate', HEADER_TEXT)}>
+                  Authors
+                </TableHead>
+                <TableHead className={cn('truncate', HEADER_TEXT)}>
+                  Created by
+                </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -366,6 +375,10 @@ function ContentRow({ item }: { item: ContentItemSummary }) {
       )}
       onClick={() => openItem(item.id)}
     >
+      {/*
+        Every cell cuts its content with an ellipsis instead of spilling into
+        the next column; the full value shows on hover.
+      */}
       <TableCell className="font-medium">
         <button
           type="button"
@@ -379,15 +392,15 @@ function ContentRow({ item }: { item: ContentItemSummary }) {
           {item.title}
         </button>
       </TableCell>
-      <TableCell>
-        <span className={cn(isArchived && 'opacity-60 grayscale')}>
+      <TableCell className="truncate">
+        <span className={cn('flex', isArchived && 'opacity-60 grayscale')}>
           <StatusBadge status={item.status} />
         </span>
       </TableCell>
-      <TableCell>
+      <TableCell className="truncate">
         <TypeBadge type={item.type} />
       </TableCell>
-      <TableCell>
+      <TableCell className="truncate">
         {isArchived ? (
           <span className="text-xs text-muted-foreground">
             {formatDate(item.archivedAt!)}
@@ -396,7 +409,7 @@ function ContentRow({ item }: { item: ContentItemSummary }) {
           <Deadline deadline={item.deadline} status={item.status} />
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">
         <AuthorAvatars authors={item.authors} />
       </TableCell>
       <TableCell className="truncate">{item.createdBy.name}</TableCell>
@@ -543,12 +556,13 @@ function SortableHead({
         type="button"
         onClick={() => onSort(sortKey)}
         className={cn(
-          'group/sort -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
+          // As wide as the column at most (plus the -mx-1.5 overhang), so a long label is cut.
+          'group/sort -mx-1.5 inline-flex max-w-[calc(100%+0.75rem)] items-center gap-1 rounded-md px-1.5 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none',
           HEADER_TEXT,
           isSorted && 'text-foreground',
         )}
       >
-        {label}
+        <span className="truncate">{label}</span>
         <Icon
           aria-hidden
           className={cn(

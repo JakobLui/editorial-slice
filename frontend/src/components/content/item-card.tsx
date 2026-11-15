@@ -32,7 +32,7 @@ export function ItemCard({ item }: { item: ContentItemSummary }) {
           type="button"
           // Two lines at most, so cards stay even; the full title is on hover and in the details.
           title={item.title}
-          className="line-clamp-2 cursor-pointer text-left leading-snug font-medium outline-none after:absolute after:inset-0 after:rounded-[inherit]"
+          className="line-clamp-2 cursor-pointer text-left wrap-anywhere leading-snug font-medium outline-none after:absolute after:inset-0 after:rounded-[inherit]"
           onClick={open}
         >
           {item.title}
@@ -40,15 +40,21 @@ export function ItemCard({ item }: { item: ContentItemSummary }) {
 
         <div className="flex items-center gap-2">
           <TypeBadge type={item.type} />
+          {/* The date gives way first: it shrinks and gets an ellipsis. */}
           {item.deadline && (
-            <Deadline deadline={item.deadline} status={item.status} />
+            <div className="flex min-w-0">
+              <Deadline deadline={item.deadline} status={item.status} />
+            </div>
           )}
           {/*
             Above the stretched button, so the names still show on hover.
             A click opens the item too, so the card has no dead spot; the
             keyboard uses the title button.
           */}
-          <div className="relative ml-auto cursor-pointer" onClick={open}>
+          <div
+            className="relative ml-auto shrink-0 cursor-pointer"
+            onClick={open}
+          >
             <AuthorAvatars authors={item.authors} showEmpty={false} />
           </div>
         </div>

@@ -18,13 +18,14 @@ export function TypeBadge({
 
   return (
     <span
+      title={TYPE_LABELS[type]}
       className={cn(
-        'inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 text-xs font-medium text-muted-foreground',
+        'inline-flex h-5 max-w-full shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 text-xs font-medium text-muted-foreground',
         className,
       )}
     >
-      <Icon className="size-3" />
-      {TYPE_LABELS[type]}
+      <Icon className="size-3 shrink-0" />
+      <span className="truncate">{TYPE_LABELS[type]}</span>
     </span>
   )
 }

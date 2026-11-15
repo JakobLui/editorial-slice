@@ -6,7 +6,8 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      {/* min-w-0: a wide table scrolls inside the page, not the page itself. */}
+      <SidebarInset className="min-w-0">
         <Outlet />
       </SidebarInset>
     </SidebarProvider>
