@@ -1,64 +1,71 @@
-import { Users } from 'lucide-react'
-import { useListUsers } from '@/api/generated/users/users'
+import { ChevronDown } from 'lucide-react'
+import { OptionList } from '@/components/content/option-list'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { useAuthorOptions } from '@/hooks/use-author-options'
 
-/** Pick authors from all users. `onChange` gets the full new list of ids. */
+/**
+ * Pick authors from all users, like the Author filter: searchable, with
+ * avatars, and open until the user is done. `onChange` gets the full list.
+ */
 export function AuthorsPicker({
   authorIds,
   onChange,
-  disabled,
 }: {
   authorIds: string[]
   onChange: (authorIds: string[]) => void
-  disabled?: boolean
 }) {
-  const users = useListUsers()
+  const authorOptions = useAuthorOptions()
+  const selectedOptions = authorOptions.filter((option) =>
+    authorIds.includes(option.value),
+  )
 
-  const selectedNames = (users.data ?? [])
-    .filter((user) => authorIds.includes(user.id))
-    .map((user) => user.name)
-
-  const toggleAuthor = (userId: string, checked: boolean) =>
+  const toggleAuthor = (userId: string) =>
     onChange(
-      checked
-        ? [...authorIds, userId]
-        : authorIds.filter((authorId) => authorId !== userId),
+      authorIds.includes(userId)
+        ? authorIds.filter((authorId) => authorId !== userId)
+        : [...authorIds, userId],
     )
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        disabled={disabled}
+    <Popover>
+      <PopoverTrigger
         render={
           <Button
             variant="outline"
-            className="h-auto min-h-8 justify-start text-left"
+            aria-label={`Authors: ${selectedOptions.map((option) => option.label).join(', ') || 'none'}`}
+            className="h-auto min-h-8 w-full flex-wrap justify-start py-1 font-normal"
           />
         }
       >
-        <Users />
-        <span className="whitespace-normal">
-          {selectedNames.length > 0 ? selectedNames.join(', ') : 'No authors'}
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-56">
-        {(users.data ?? []).map((user) => (
-          <DropdownMenuCheckboxItem
-            key={user.id}
-            checked={authorIds.includes(user.id)}
-            onCheckedChange={(checked) => toggleAuthor(user.id, checked)}
-            closeOnClick={false}
-          >
-            {user.name}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        {selectedOptions.length === 0 ? (
+          <span className="text-muted-foreground">No authors</span>
+        ) : (
+          selectedOptions.map((option) => (
+            <span
+              key={option.value}
+              className="inline-flex items-center gap-1 rounded-md bg-secondary px-1.5 text-xs font-medium"
+            >
+              {option.leading}
+              {option.label}
+            </span>
+          ))
+        )}
+        <ChevronDown className="ml-auto opacity-50" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-0">
+        <OptionList
+          options={authorOptions}
+          selected={authorIds}
+          onToggle={toggleAuthor}
+          multiple
+          searchPlaceholder="Search people"
+        />
+      </PopoverContent>
+    </Popover>
   )
 }

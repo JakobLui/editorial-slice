@@ -12,6 +12,7 @@ export const loginSchema = z
 
 export const meSchema = userSchema
   .extend({
+    email: z.email(),
     permissions: z.array(z.enum(PERMISSIONS)).meta({
       description:
         "What the role allows in general. Per item, use the item's `allowed` flags.",

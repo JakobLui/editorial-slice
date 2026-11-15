@@ -17,10 +17,12 @@ import type {
   ContentType,
   UpdateContent,
 } from '@/api/generated/model'
-import { useGetMe } from '@/api/generated/users/users'
+import { useGetMe } from '@/api/generated/auth/auth'
 import { AuthorsPicker } from '@/components/content/authors-picker'
 import { BriefEditor } from '@/components/content/brief-editor'
 import { Deadline } from '@/components/content/deadline'
+import { DeadlinePicker } from '@/components/content/deadline-picker'
+import { OptionPicker } from '@/components/content/option-picker'
 import { StatusBadge } from '@/components/content/status-badge'
 import { TypeBadge } from '@/components/content/type-badge'
 import {
@@ -42,22 +44,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { UserAvatar } from '@/components/user-avatar'
-import {
-  CONTENT_TYPES,
-  formatDate,
-  STATUS_LABELS,
-  TYPE_LABELS,
-  WORK_STATUSES,
-} from '@/lib/content'
+import { formatDate, WORK_STATUSES } from '@/lib/content'
+import { statusOption, TYPE_OPTIONS } from '@/lib/content-options'
 
 /**
  * One content item, in a modal at /items/:id over the page it was opened
@@ -264,24 +254,14 @@ function ItemForm({
           {canEdit && item.status !== 'published' ? (
             <form.Field name="status">
               {(field) => (
-                <Select
-                  items={STATUS_LABELS}
+                <OptionPicker
+                  label="Status"
+                  options={WORK_STATUSES.map(statusOption)}
                   value={field.state.value}
-                  onValueChange={(status) =>
-                    status && field.handleChange(status)
+                  onChange={(status) =>
+                    field.handleChange(status as ContentStatus)
                   }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {WORK_STATUSES.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {STATUS_LABELS[status]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               )}
             </form.Field>
           ) : (
@@ -293,22 +273,12 @@ function ItemForm({
           {canEdit ? (
             <form.Field name="type">
               {(field) => (
-                <Select
-                  items={TYPE_LABELS}
+                <OptionPicker
+                  label="Type"
+                  options={TYPE_OPTIONS}
                   value={field.state.value}
-                  onValueChange={(type) => type && field.handleChange(type)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CONTENT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {TYPE_LABELS[type]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(type) => field.handleChange(type as ContentType)}
+                />
               )}
             </form.Field>
           ) : (
@@ -320,11 +290,9 @@ function ItemForm({
           {canEdit ? (
             <form.Field name="deadline">
               {(field) => (
-                <Input
-                  type="date"
-                  aria-label="Deadline"
+                <DeadlinePicker
                   value={field.state.value}
-                  onChange={(event) => field.handleChange(event.target.value)}
+                  onChange={field.handleChange}
                 />
               )}
             </form.Field>

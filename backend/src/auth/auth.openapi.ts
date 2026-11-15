@@ -33,7 +33,10 @@ registry.registerPath({
   tags: ['auth'],
   summary: 'Sign in with email and password; sets the session cookie',
   request: {
-    body: { content: { 'application/json': { schema: loginSchema } } },
+    body: {
+      required: true,
+      content: { 'application/json': { schema: loginSchema } },
+    },
   },
   responses: {
     200: meResponse,

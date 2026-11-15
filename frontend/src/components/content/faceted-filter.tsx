@@ -1,13 +1,9 @@
-import { Check, ChevronDown, PlusCircle } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChevronDown, PlusCircle } from 'lucide-react'
+import { OptionList } from '@/components/content/option-list'
 import { Button } from '@/components/ui/button'
 import {
-  Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
-  CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
 import {
@@ -16,17 +12,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
+import type { PickerOption } from '@/lib/content-options'
 import { cn } from '@/lib/utils'
 
-export interface FilterOption {
-  value: string
-  label: string
-  /** Shown before the label: a status dot, a type icon, an avatar. */
-  leading?: ReactNode
-}
-
 /**
- * One filter as a button that opens a searchable list. Empty, it is a quiet
+ * One filter as a button that opens a list. Empty, it is a quiet
  * dashed "+ Status" button; with a selection it shows the chosen values, so
  * the active filters can be read at a glance.
  */
@@ -39,11 +29,12 @@ export function FacetedFilter({
   searchPlaceholder,
 }: {
   label: string
-  options: FilterOption[]
+  options: PickerOption[]
   selected: string[]
   onChange: (selected: string[]) => void
   /** False for a single choice (picking another value replaces it). */
   multiple?: boolean
+  /** Shows a search field; only worth it for long lists such as people. */
   searchPlaceholder?: string
 }) {
   const selectedOptions = options.filter((option) =>
@@ -100,59 +91,27 @@ export function FacetedFilter({
       </PopoverTrigger>
 
       <PopoverContent align="start" className="w-60 p-0">
-        <Command>
-          <CommandInput
-            placeholder={searchPlaceholder ?? `Search ${label.toLowerCase()}`}
-          />
-          <CommandList>
-            <CommandEmpty>No matches.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => {
-                const isSelected = selected.includes(option.value)
-
-                return (
-                  <CommandItem
-                    key={option.value}
-                    value={option.label}
-                    onSelect={() => toggle(option.value)}
-                  >
-                    {multiple && (
-                      <span
-                        className={cn(
-                          'flex size-4 items-center justify-center rounded-sm border',
-                          isSelected
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-input',
-                        )}
-                      >
-                        {isSelected && (
-                          <Check className="size-3 text-primary-foreground!" />
-                        )}
-                      </span>
-                    )}
-                    {option.leading}
-                    <span className="flex-1 truncate">{option.label}</span>
-                    {!multiple && isSelected && <Check className="size-4" />}
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-
-            {selected.length > 0 && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={() => onChange([])}
-                    className="justify-center"
-                  >
-                    Clear {label.toLowerCase()}
-                  </CommandItem>
-                </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        </Command>
+        <OptionList
+          options={options}
+          selected={selected}
+          onToggle={toggle}
+          multiple={multiple}
+          searchPlaceholder={searchPlaceholder}
+        >
+          {selected.length > 0 && (
+            <>
+              <CommandSeparator />
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => onChange([])}
+                  className="justify-center"
+                >
+                  Clear {label.toLowerCase()}
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
+        </OptionList>
       </PopoverContent>
     </Popover>
   )

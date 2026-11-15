@@ -1,11 +1,13 @@
-# Editorial slice
+# Editorial Tracker
 
-A React frontend, an Express API and a PostgreSQL database.
+An internal tool for tracking content pieces (articles, newsletters, podcasts, videos) from idea to published. Editors see and manage every item and publish them; contributors see and edit only the items they created or are authors on.
+
+To see the difference between the roles, sign in as Mette (editor), then as Jonas (contributor). The users are listed under [Sample data](#sample-data).
 
 ## Stack
 
-- `frontend/`: Vite, React, TypeScript, React Router, Tailwind 4, shadcn/ui, TanStack Query.
-- `backend/`: Node, Express 5, TypeScript, zod, TypeORM, Pino.
+- `frontend/`: Vite, React, TypeScript, React Router, Tailwind 4, shadcn/ui, TanStack Query and TanStack Form, Tiptap, Orval (the generated API client).
+- `backend/`: Node, Express 5, TypeScript, zod, TypeORM, Pino, jose (session tokens), argon2 (password hashing).
 
 ## Run it
 
@@ -54,7 +56,7 @@ This is a case-sized slice, not a production setup.
 - **Published items are history.** I assumed that published items stay as history, so I added a board endpoint grouped on status that only shows the in-progress status items (Idea, Draft, Review). This is to avoid either having a long list of published items or having one group with a forced date filter applied.
 - **Items are edited in a modal with an explicit save.** Clicking an item opens it over the page, at its own URL (`/items/:id`), so it can be shared. Changes are saved with "Save changes"; closing with unsaved changes asks first. Only the properties the user may change are editable.
 - **Three views.** The Dashboard is a table of every active item, where items are created, opened and edited. In progress is a read-only board of Idea, Draft and Review for an overview. Archived items have their own Archive page, where they can be restored.
-- **Publishing happens from the Dashboard table.** Publishing is the editorial sign-off, so editors publish items in Review (and unpublish published ones) with a button on the row, not from the edit form.
+- **Publishing happens from the Dashboard table.** Publishing is the editorial sign-off, so editors publish items in Review (and unpublish published ones) with a button on the row.
 - **Status colours.** Idea is blue, Draft gray, Review purple and Published green; the label is always shown too.
 - **The brief is an addition.** The case describes a tracker, so items hold a short rich-text brief (Tiptap) and a link to the draft, not the article itself.
 - **Deadline is a date, and optional.** I assumed that an idea doesn't always need a deadline.
@@ -63,15 +65,18 @@ This is a case-sized slice, not a production setup.
 
 ### Limits
 
+- **Desktop only.** The layout targets desktop screens, from 720p up to 4K. There is no phone or tablet layout.
 - **Development mode only.** The containers run the dev servers (`pnpm dev`) with live reload. There is no production build or image.
 - **No migrations.** TypeORM creates and updates the tables from the entities on every start (`synchronize: true`). A production setup would use migrations.
 - **Hardcoded credentials.** The database user and password and the `SESSION_SECRET` that signs sessions are in `docker-compose.yml`, and the sample users share one password. A production setup would read the secrets from a secret store.
 - **Logging to stdout only.** The backend logs with Pino: readable lines in development, JSON otherwise, level set by `LOG_LEVEL`. Logs are not shipped to a log service.
 - **Basic error handling.** One error handler in `middleware/error-handler.ts` turns validation errors into 400, `AppError` into its status, and everything else into 500. There are no error codes for clients and no error tracking service.
+- **No automated tests.** The flows were checked by hand and with throwaway browser and API scripts during development. The first tests to add would cover the permission rules (`content.policy.ts`) and the content endpoints.
 - **No CI.** The checks under [Checks](#checks) run locally.
 - **TypeScript 6.0, not 7.** typescript-eslint, which lets ESLint read TypeScript, does not support TypeScript 7 yet.
 - **The board is capped at 500 items.** It loads all work in progress at once, which suits a small newsroom; the response says when items were left out. Lists elsewhere are paginated.
 - **Search matches titles only.** No search in briefs and no full-text search.
+- **No date filters in the UI.** The list endpoint takes deadline and published date ranges (`deadlineFrom`/`deadlineTo`, `publishedFrom`/`publishedTo`), but the Dashboard only sorts by date. Date filters could be added in the UI later; the list endpoint already supports them.
 - **No real-time co-editing of the brief.** If two people save the brief at once, the last save wins. A real version would add real-time co-editing (for example Tiptap with Yjs).
 - **No hard delete.** Items can only be archived. Permanent deletion could be added as a `purgeAt` column and a scheduled job that deletes rows past it.
 - **Logout does not end the session on the server.** The session is a signed token (JWT) in a cookie. Logout clears the cookie, but a copied token stays valid until it expires after 8 hours. A production setup would keep sessions in the database so they can be revoked.
@@ -114,7 +119,6 @@ To add a module:
 3. Import its `.openapi.ts` file in `openapi/document.ts`.
 4. Add its entity classes to `entities` in `database/data-source.ts`.
 
-TypeORM creates and updates the tables from the entities on every start (`synchronize: true`).
 Give every `@Column` an explicit `type`: the backend runs on tsx, which does not emit the decorator type metadata that TypeORM otherwise infers the type from.
 
 ## Generated API client
@@ -128,7 +132,7 @@ pnpm api:generate
 
 That command writes `backend/openapi.json` from the zod schemas, then runs [orval](https://orval.dev), which writes typed TanStack Query hooks to `frontend/src/api/generated`. Both outputs are committed. It needs Node 24 and pnpm, and `pnpm install` run in both folders.
 
-Every generated call goes through `frontend/src/api/fetcher.ts`. It sends the current user and throws an `ApiError` (status and the API's message) on error statuses, so TanStack Query treats them as failures. After any successful change, `frontend/src/api/query-client.ts` refetches all content queries.
+Every generated call goes through `frontend/src/api/fetcher.ts`. It throws an `ApiError` (status and the API's message) on error statuses, so TanStack Query treats them as failures; the browser sends the session cookie by itself. After any successful change, `frontend/src/api/query-client.ts` refetches all content queries. A 401 from any call means the session ended: it rechecks `GET /api/auth/me`, and `RequireAuth` (`frontend/src/components/require-auth.tsx`) sends the user to the login page, which returns them to where they were.
 
 ## Checks
 

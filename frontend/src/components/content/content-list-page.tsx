@@ -38,8 +38,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -62,10 +60,6 @@ const PAGE_SIZE = 20
 const ALL_STATUSES = Object.keys(STATUS_LABELS) as ContentStatus[]
 
 /** The start and end of a local day ('YYYY-MM-DD') as ISO timestamps for the API. */
-const startOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString()
-const endOfDay = (date: string) =>
-  new Date(`${date}T23:59:59.999`).toISOString()
-
 type ListMode = 'active' | 'archived'
 
 type SortKey = NonNullable<ListContentParams['sort']>
@@ -102,8 +96,6 @@ function parseSort(searchParams: URLSearchParams): Sort | null {
 /** Everything about the list that lives in the URL. */
 interface ListState {
   filters: ContentFilters
-  publishedFrom: string
-  publishedTo: string
   page: number
   sort: Sort
 }
@@ -112,12 +104,6 @@ function toSearchParams(listState: ListState) {
   const searchParams = new URLSearchParams()
 
   appendFilters(searchParams, listState.filters)
-  if (listState.publishedFrom) {
-    searchParams.set('publishedFrom', listState.publishedFrom)
-  }
-  if (listState.publishedTo) {
-    searchParams.set('publishedTo', listState.publishedTo)
-  }
 
   searchParams.set('page', String(listState.page))
   searchParams.set('sort', listState.sort.key)
@@ -143,8 +129,6 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
     : { key: 'deadline', order: 'asc' }
   const sort: Sort = parseSort(searchParams) ?? defaultSort
   const filters = filtersFromSearchParams(searchParams)
-  const publishedFrom = searchParams.get('publishedFrom') ?? ''
-  const publishedTo = searchParams.get('publishedTo') ?? ''
   const search = useDebouncedValue(filters.search.trim())
 
   // Any change but paging starts again at page 1.
@@ -152,8 +136,6 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
     setSearchParams(
       toSearchParams({
         filters,
-        publishedFrom,
-        publishedTo,
         sort,
         page: 1,
         ...changes,
@@ -179,19 +161,11 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
       { replace: nextFilters.search !== filters.search },
     )
 
-  // The published date range only makes sense when listing published items.
-  const onlyPublished =
-    filters.statuses.length === 1 && filters.statuses[0] === 'published'
-
   const params: ListContentParams = {
     status: filters.statuses.length > 0 ? filters.statuses : undefined,
     type: filters.types.length > 0 ? filters.types : undefined,
     authorId: filters.authorId ?? undefined,
     q: search || undefined,
-    publishedFrom:
-      onlyPublished && publishedFrom ? startOfDay(publishedFrom) : undefined,
-    publishedTo:
-      onlyPublished && publishedTo ? endOfDay(publishedTo) : undefined,
     page,
     pageSize: PAGE_SIZE,
     sort: sort.key,
@@ -232,23 +206,6 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
           onChange={changeFilters}
           statuses={ALL_STATUSES}
         />
-
-        {onlyPublished && (
-          <div className="flex items-end gap-2">
-            <DateFilter
-              id="published-from"
-              label="Published from"
-              value={publishedFrom}
-              onChange={(value) => updateList({ publishedFrom: value })}
-            />
-            <DateFilter
-              id="published-to"
-              label="To"
-              value={publishedTo}
-              onChange={(value) => updateList({ publishedTo: value })}
-            />
-          </div>
-        )}
       </Toolbar>
 
       <div className="mx-auto flex w-full max-w-(--breakpoint-2xl) flex-1 flex-col gap-4 p-4">
@@ -378,33 +335,6 @@ export function ContentListPage({ mode }: { mode: ListMode }) {
         </div>
       </div>
     </>
-  )
-}
-
-function DateFilter({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <Label htmlFor={id} className="text-xs">
-        {label}
-      </Label>
-      <Input
-        id={id}
-        type="date"
-        className="w-40"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </div>
   )
 }
 

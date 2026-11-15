@@ -15,7 +15,13 @@ const unknownUserHash = argon2.hash('no user has this password')
 export async function login({ email, password }: LoginInput) {
   const user = await dataSource.getRepository(User).findOne({
     where: { email: email.toLowerCase() },
-    select: { id: true, name: true, role: true, passwordHash: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      passwordHash: true,
+    },
   })
 
   const passwordMatches = await argon2.verify(
@@ -26,7 +32,12 @@ export async function login({ email, password }: LoginInput) {
     throw new UnauthorizedError('Wrong email or password')
   }
 
-  const signedInUser = { id: user.id, name: user.name, role: user.role }
+  const signedInUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  }
   const sessionToken = await createSessionToken(user.id)
 
   return { me: me(signedInUser), sessionToken }

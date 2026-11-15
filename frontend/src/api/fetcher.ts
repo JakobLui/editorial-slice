@@ -1,5 +1,3 @@
-import { getDevUserId } from '@/api/dev-users'
-
 /** A non-2xx answer from the API, with the API's own message. */
 export class ApiError extends Error {
   readonly status: number
@@ -12,19 +10,16 @@ export class ApiError extends Error {
 }
 
 /**
- * Every generated API call goes through here (see orval.config.ts). It sends
- * the current user and turns error statuses into thrown `ApiError`s, so React
- * Query treats them as failures. Returns the parsed body only.
+ * Every generated API call goes through here (see orval.config.ts). It turns
+ * error statuses into thrown `ApiError`s, so React Query treats them as
+ * failures, and returns the parsed body only. The browser sends the session
+ * cookie by itself: the API is on the same origin (through the Vite proxy).
  */
 export async function customFetch<T>(
   url: string,
   options: RequestInit,
 ): Promise<T> {
-  const headers = new Headers(options.headers)
-  // Development stand-in for login; the auth module replaces it.
-  headers.set('X-User-Id', getDevUserId())
-
-  const response = await fetch(url, { ...options, headers })
+  const response = await fetch(url, options)
   const body = response.status === 204 ? '' : await response.text()
   const data = body ? JSON.parse(body) : undefined
 

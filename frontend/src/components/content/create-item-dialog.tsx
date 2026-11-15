@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useCreateContent } from '@/api/generated/content/content'
 import type { ContentType, CreateContentStatus } from '@/api/generated/model'
-import { useGetMe } from '@/api/generated/users/users'
+import { useGetMe } from '@/api/generated/auth/auth'
 import { AuthorsPicker } from '@/components/content/authors-picker'
+import { DeadlinePicker } from '@/components/content/deadline-picker'
+import { OptionPicker } from '@/components/content/option-picker'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,20 +20,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useOpenItem } from '@/hooks/use-open-item'
-import {
-  CONTENT_TYPES,
-  STATUS_LABELS,
-  TYPE_LABELS,
-  WORK_STATUSES,
-} from '@/lib/content'
+import { WORK_STATUSES } from '@/lib/content'
+import { statusOption, TYPE_OPTIONS } from '@/lib/content-options'
 
 /** "New item" button and the modal form behind it. */
 export function CreateItemDialog() {
@@ -135,22 +126,12 @@ function CreateItemForm({ onCreated }: { onCreated: () => void }) {
           {(field) => (
             <div className="flex flex-col gap-1.5">
               <Label>Type</Label>
-              <Select
-                items={TYPE_LABELS}
+              <OptionPicker
+                label="Type"
+                options={TYPE_OPTIONS}
                 value={field.state.value}
-                onValueChange={(type) => type && field.handleChange(type)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONTENT_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {TYPE_LABELS[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(type) => field.handleChange(type as ContentType)}
+              />
             </div>
           )}
         </form.Field>
@@ -159,22 +140,14 @@ function CreateItemForm({ onCreated }: { onCreated: () => void }) {
           {(field) => (
             <div className="flex flex-col gap-1.5">
               <Label>Status</Label>
-              <Select
-                items={STATUS_LABELS}
+              <OptionPicker
+                label="Status"
+                options={WORK_STATUSES.map(statusOption)}
                 value={field.state.value}
-                onValueChange={(status) => status && field.handleChange(status)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORK_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {STATUS_LABELS[status]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(status) =>
+                  field.handleChange(status as CreateContentStatus)
+                }
+              />
             </div>
           )}
         </form.Field>
@@ -184,12 +157,10 @@ function CreateItemForm({ onCreated }: { onCreated: () => void }) {
         <form.Field name="deadline">
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>Deadline</Label>
-              <Input
-                id={field.name}
-                type="date"
+              <Label>Deadline</Label>
+              <DeadlinePicker
                 value={field.state.value}
-                onChange={(event) => field.handleChange(event.target.value)}
+                onChange={field.handleChange}
               />
             </div>
           )}

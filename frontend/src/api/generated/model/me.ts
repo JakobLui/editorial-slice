@@ -11,6 +11,7 @@ export interface Me {
   id: string;
   name: string;
   role: MeRole;
+  email: string;
   /** What the role allows in general. Per item, use the item's `allowed` flags. */
   permissions: MePermissionsItem[];
 }

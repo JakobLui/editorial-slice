@@ -9,6 +9,7 @@ import { SESSION_COOKIE } from './auth.cookie'
 export interface CurrentUser {
   id: string
   name: string
+  email: string
   role: UserRole
 }
 
@@ -36,7 +37,12 @@ export const requireUser: RequestHandler = async (req, _res, next) => {
   const user = await dataSource.getRepository(User).findOneBy({ id: userId })
   if (!user) throw new UnauthorizedError()
 
-  req.user = { id: user.id, name: user.name, role: user.role }
+  req.user = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  }
   next()
 }
 

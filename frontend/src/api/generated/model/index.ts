@@ -24,6 +24,7 @@ export * from './listContentArchived';
 export * from './listContentOrder';
 export * from './listContentParams';
 export * from './listContentSort';
+export * from './loginRequest';
 export * from './me';
 export * from './mePermissionsItem';
 export * from './meRole';

@@ -54,6 +54,10 @@
               "contributor"
             ]
           },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
           "permissions": {
             "type": "array",
             "items": {
@@ -77,6 +81,7 @@
           "id",
           "name",
           "role",
+          "email",
           "permissions"
         ]
       },
@@ -560,6 +565,7 @@
         ],
         "summary": "Sign in with email and password; sets the session cookie",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
