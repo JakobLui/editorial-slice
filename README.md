@@ -1,0 +1,93 @@
+# Editorial slice
+
+A React frontend, an Express API and a PostgreSQL database.
+
+## Stack
+
+- `frontend/`: Vite, React, TypeScript, React Router, Tailwind 4, shadcn/ui, TanStack Query.
+- `backend/`: Node, Express 5, TypeScript, zod, TypeORM, Pino.
+
+## Run it
+
+Requires Docker with Compose v2 (`docker compose`), which Docker Desktop includes.
+
+```sh
+docker compose up --build
+```
+
+- Frontend: http://localhost:5173
+- API: http://localhost:3000/api/health
+- OpenAPI spec: http://localhost:3000/api/openapi.json
+- PostgreSQL: `localhost:5433` (user `postgres`, password `postgres`, database `editorial`)
+
+Changes under `frontend/src` and `backend/src` reload in the running containers.
+After a change to a `package.json`, run `docker compose up --build` again.
+
+## Decisions and limits
+
+This is a case-sized slice, not a production setup. These limits are intentional:
+
+- **Development mode only.** The containers run the dev servers (`pnpm dev`) with live reload. There is no production build or image.
+- **No migrations.** TypeORM creates and updates the tables from the entities on every start (`synchronize: true`). A production setup would use migrations.
+- **Hardcoded credentials.** The database user and password are in `docker-compose.yml`. A production setup would read them from secrets.
+- **Logging to stdout only.** The backend logs with Pino: readable lines in development, JSON otherwise, level set by `LOG_LEVEL`. Logs are not shipped to a log service.
+- **Basic error handling.** One error handler in `middleware/error-handler.ts` turns validation errors into 400, `AppError` into its status, and everything else into 500. There are no error codes for clients and no error tracking service.
+- **No CI.** The checks under [Checks](#checks) run locally.
+- **TypeScript 6.0, not 7.** typescript-eslint, which lets ESLint read TypeScript, does not support TypeScript 7 yet.
+
+## Backend layout
+
+The backend follows [Tao of Node](https://alexkondov.com/tao-of-node/): one folder per domain module, and three layers inside it.
+
+```
+backend/src/
+  server.ts          connects to the database and starts the HTTP server
+  app.ts             builds the Express app and mounts the module routers
+  config/env.ts      parses the environment variables with zod
+  database/          the TypeORM DataSource
+  middleware/        the 404 handler and the error handler
+  errors.ts          AppError: throw it to answer with a specific HTTP status
+  logger.ts          the Pino logger; pino-http logs every request as req.log
+  openapi/           builds openapi.json from the zod schemas
+  modules/<name>/
+    <name>.router.ts     maps URLs to handlers
+    <name>.handlers.ts   HTTP in and out; parses input with the zod schemas
+    <name>.service.ts    business logic and data access
+    <name>.schemas.ts    zod schemas for requests and responses
+    <name>.openapi.ts    registers the module's routes in the OpenAPI spec
+```
+
+To add a module:
+
+1. Copy `modules/health` and rename it.
+2. Mount its router in `app.ts`.
+3. Import its `.openapi.ts` file in `openapi/document.ts`.
+4. Add its entity classes to `entities` in `database/data-source.ts`.
+
+TypeORM creates and updates the tables from the entities on every start (`synchronize: true`).
+Give every `@Column` an explicit `type`: the backend runs on tsx, which does not emit the decorator type metadata that TypeORM otherwise infers the type from.
+
+## Generated API client
+
+The frontend's API calls are generated from the backend's zod schemas.
+
+```sh
+cd frontend
+pnpm api:generate
+```
+
+That command writes `backend/openapi.json` from the zod schemas, then runs [orval](https://orval.dev), which writes typed TanStack Query hooks to `frontend/src/api/generated`. Both outputs are committed. It needs Node 24 and pnpm, and `pnpm install` run in both folders.
+
+## Checks
+
+Each project has the same check scripts. Run them in `backend/` or `frontend/`:
+
+```sh
+pnpm typecheck      # TypeScript
+pnpm lint           # ESLint
+pnpm format:check   # Prettier, reports unformatted files
+pnpm format         # Prettier, rewrites unformatted files
+```
+
+The Prettier config is shared: `.prettierrc.json` at the repo root.
+In VS Code, Prettier formats each file on save and ESLint applies its fixes (see `.vscode/settings.json`).

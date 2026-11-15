@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: editorial
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d editorial"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/editorial
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      API_PROXY_TARGET: http://backend:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

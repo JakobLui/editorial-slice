@@ -1,0 +1,19 @@
+import { createApp } from './app'
+import { env } from './config/env'
+import { dataSource } from './database/data-source'
+import { logger } from './logger'
+
+await dataSource.initialize()
+
+const server = createApp().listen(env.PORT, () => {
+  logger.info(`API listening on http://localhost:${env.PORT}`)
+})
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    server.close(async () => {
+      await dataSource.destroy()
+      process.exit(0)
+    })
+  })
+}
