@@ -1,6 +1,8 @@
+import cookieParser from 'cookie-parser'
 import express from 'express'
 import { pinoHttp } from 'pino-http'
-import { devUserFromHeader } from './auth/current-user'
+import { authRouter } from './auth/auth.router'
+import { requireUser } from './auth/auth.middleware'
 import { logger } from './logger'
 import { errorHandler, notFoundHandler } from './middleware/error-handler'
 import { contentRouter } from './modules/content/content.router'
@@ -22,11 +24,13 @@ export function createApp() {
     }),
   )
   app.use(express.json())
+  app.use(cookieParser())
 
   // Mount each module's router here.
   app.use('/api/health', healthRouter)
-  app.use('/api/content', devUserFromHeader, contentRouter)
-  app.use('/api/users', devUserFromHeader, usersRouter)
+  app.use('/api/auth', authRouter)
+  app.use('/api/content', requireUser, contentRouter)
+  app.use('/api/users', requireUser, usersRouter)
 
   app.get('/api/openapi.json', (_req, res) => {
     res.json(buildOpenApiDocument())

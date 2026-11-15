@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { currentUser } from '../../auth/current-user'
+import { currentUser } from '../../auth/auth.middleware'
 import {
   boardQuerySchema,
   contentIdParamsSchema,

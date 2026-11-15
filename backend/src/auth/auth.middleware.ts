@@ -1,9 +1,9 @@
 import type { Request, RequestHandler } from 'express'
-import { z } from 'zod'
 import { dataSource } from '../database/data-source'
 import { UnauthorizedError } from '../errors'
 import { User, type UserRole } from '../modules/users/user.entity'
-import { DEV_USER_HEADER } from './dev-user-header'
+import { userIdFromSessionToken } from './auth.session'
+import { SESSION_COOKIE } from './auth.cookie'
 
 /** The signed-in user, as the rest of the backend sees them. */
 export interface CurrentUser {
@@ -23,26 +23,25 @@ declare global {
 }
 
 /**
- * Stand-in for real auth: trusts the user id in the `X-User-Id` header.
- * Anyone can claim to be anyone, so it is for development only. The auth
- * module replaces it with a session; the endpoints keep reading `req.user`.
+ * Reads the session cookie and sets `req.user`. Answers 401 when the cookie
+ * is missing, the token is invalid or expired, or the user no longer exists.
  */
-export const devUserFromHeader: RequestHandler = async (req, _res, next) => {
-  const userId = req.header(DEV_USER_HEADER)
-  if (!userId) throw new UnauthorizedError(`Missing ${DEV_USER_HEADER} header`)
+export const requireUser: RequestHandler = async (req, _res, next) => {
+  const sessionToken: unknown = req.cookies?.[SESSION_COOKIE]
+  if (typeof sessionToken !== 'string') throw new UnauthorizedError()
 
-  // Check the format first: PostgreSQL rejects a malformed UUID with an error.
-  const user = z.uuid().safeParse(userId).success
-    ? await dataSource.getRepository(User).findOneBy({ id: userId })
-    : null
-  if (!user) throw new UnauthorizedError('Unknown user')
+  const userId = await userIdFromSessionToken(sessionToken)
+  if (!userId) throw new UnauthorizedError('Session expired or invalid')
+
+  const user = await dataSource.getRepository(User).findOneBy({ id: userId })
+  if (!user) throw new UnauthorizedError()
 
   req.user = { id: user.id, name: user.name, role: user.role }
   next()
 }
 
 /**
- * The signed-in user, for handlers on routers behind `devUserFromHeader`.
+ * The signed-in user, for handlers on routers behind `requireUser`.
  * `req.user` is optional on Express's shared Request type; this narrows it,
  * and answers 401 if a router was mounted without the middleware.
  */

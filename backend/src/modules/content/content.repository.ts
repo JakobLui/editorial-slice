@@ -1,5 +1,5 @@
 import { In, type SelectQueryBuilder } from 'typeorm'
-import type { CurrentUser } from '../../auth/current-user'
+import type { CurrentUser } from '../../auth/auth.middleware'
 import { dataSource } from '../../database/data-source'
 import { User } from '../users/user.entity'
 import { ContentItem } from './content-item.entity'

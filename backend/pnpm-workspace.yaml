@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  # Ships prebuilt binaries (also for Alpine); its install script only compiles as a fallback.
+  argon2: false

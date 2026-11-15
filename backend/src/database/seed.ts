@@ -1,3 +1,4 @@
+import argon2 from 'argon2'
 import type { DataSource, EntityManager } from 'typeorm'
 import { logger } from '../logger'
 import {
@@ -5,6 +6,8 @@ import {
   type TiptapDocument,
 } from '../modules/content/content-item.entity'
 import { User } from '../modules/users/user.entity'
+
+const DEMO_PASSWORD = 'editorial'
 
 /**
  * Fills an empty database with the hardcoded users and sample content items.
@@ -19,26 +22,27 @@ export async function seedIfEmpty(dataSource: DataSource) {
 }
 
 async function seed(manager: EntityManager) {
-  // Fixed ids: the frontend's development user switcher lists the same ids
-  // (frontend/src/api/dev-users.ts). Both go away with the auth module.
+  // Every sample user has the same password, listed in the README.
+  const passwordHash = await argon2.hash(DEMO_PASSWORD)
+
   const [editor, jonas, sara] = await manager.save(User, [
     {
-      id: '01960000-0000-7000-8000-000000000001',
       name: 'Mette Hansen',
       email: 'mette@frihedsbrevet.test',
       role: 'editor',
+      passwordHash,
     },
     {
-      id: '01960000-0000-7000-8000-000000000002',
       name: 'Jonas Nielsen',
       email: 'jonas@frihedsbrevet.test',
       role: 'contributor',
+      passwordHash,
     },
     {
-      id: '01960000-0000-7000-8000-000000000003',
       name: 'Sara Larsen',
       email: 'sara@frihedsbrevet.test',
       role: 'contributor',
+      passwordHash,
     },
   ])
 

@@ -1,4 +1,4 @@
-import type { CurrentUser } from '../../auth/current-user'
+import type { CurrentUser } from '../../auth/auth.middleware'
 import {
   AppError,
   BadRequestError,

@@ -1,5 +1,5 @@
-import type { CurrentUser } from '../../auth/current-user'
-import { hasPermission } from '../../auth/permissions'
+import type { CurrentUser } from '../../auth/auth.middleware'
+import { hasPermission } from '../../auth/auth.permissions'
 import type { ContentStatus } from './content-item.entity'
 
 /**

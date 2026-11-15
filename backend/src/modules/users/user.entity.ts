@@ -18,4 +18,8 @@ export class User {
   // Roles are fixed; their permissions live in code (see the policy module).
   @Column({ type: 'text' })
   role: UserRole
+
+  // Argon2id. Left out of queries unless selected, so it never reaches a response.
+  @Column({ type: 'text', select: false })
+  passwordHash: string
 }

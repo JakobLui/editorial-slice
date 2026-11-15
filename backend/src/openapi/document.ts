@@ -3,6 +3,7 @@ import { registry } from './registry'
 
 // Import each module's OpenAPI registration here.
 import '../modules/health/health.openapi'
+import '../auth/auth.openapi'
 import '../modules/content/content.openapi'
 import '../modules/users/users.openapi'
 

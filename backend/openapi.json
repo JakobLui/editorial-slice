@@ -6,11 +6,11 @@
   },
   "components": {
     "securitySchemes": {
-      "devUser": {
+      "session": {
         "type": "apiKey",
-        "in": "header",
-        "name": "X-User-Id",
-        "description": "Development stand-in for real auth: the id of the acting user."
+        "in": "cookie",
+        "name": "session",
+        "description": "Set by POST /api/auth/login; httpOnly, valid for 8 hours."
       }
     },
     "schemas": {
@@ -35,6 +35,66 @@
         "required": [
           "status",
           "database"
+        ]
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "editor",
+              "contributor"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "content:read:any",
+                "content:read:own",
+                "content:update:any",
+                "content:update:own",
+                "content:assign:any",
+                "content:assign:own",
+                "content:archive:any",
+                "content:archive:own",
+                "content:publish"
+              ]
+            },
+            "description": "What the role allows in general. Per item, use the item's `allowed` flags."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "permissions"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "ContentBoard": {
@@ -467,49 +527,6 @@
           "name",
           "role"
         ]
-      },
-      "Me": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "editor",
-              "contributor"
-            ]
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "content:read:any",
-                "content:read:own",
-                "content:update:any",
-                "content:update:own",
-                "content:assign:any",
-                "content:assign:own",
-                "content:archive:any",
-                "content:archive:own",
-                "content:publish"
-              ]
-            },
-            "description": "What the role allows in general. Per item, use the item's `allowed` flags."
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "role",
-          "permissions"
-        ]
       }
     },
     "parameters": {}
@@ -535,6 +552,85 @@
         }
       }
     },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Sign in with email and password; sets the session cookie",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The signed-in user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request failed validation."
+          },
+          "401": {
+            "description": "Wrong email or password."
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "tags": [
+          "auth"
+        ],
+        "summary": "Sign out; clears the session cookie",
+        "responses": {
+          "204": {
+            "description": "Signed out."
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "auth"
+        ],
+        "summary": "The signed-in user, with their role and permissions",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The signed-in user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the session expired."
+          }
+        }
+      }
+    },
     "/api/content/board": {
       "get": {
         "tags": [
@@ -542,7 +638,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "getContentBoard",
@@ -601,7 +697,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           }
         }
       }
@@ -613,7 +709,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "listContent",
@@ -801,7 +897,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           }
         }
       },
@@ -811,7 +907,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "createContent",
@@ -840,7 +936,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           }
         }
       }
@@ -852,7 +948,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "getContent",
@@ -883,7 +979,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           },
           "404": {
             "description": "No such item, or the user may not see it."
@@ -896,7 +992,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "updateContent",
@@ -936,7 +1032,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           },
           "403": {
             "description": "The user may not do this."
@@ -957,7 +1053,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "updateContentStatus",
@@ -997,7 +1093,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           },
           "403": {
             "description": "The user may not do this."
@@ -1018,7 +1114,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "archiveContent",
@@ -1042,7 +1138,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           },
           "403": {
             "description": "The user may not do this."
@@ -1060,7 +1156,7 @@
         ],
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "operationId": "restoreContent",
@@ -1084,7 +1180,7 @@
             "description": "The request failed validation."
           },
           "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           },
           "403": {
             "description": "The user may not do this."
@@ -1104,7 +1200,7 @@
         "summary": "All users, for picking authors",
         "security": [
           {
-            "devUser": []
+            "session": []
           }
         ],
         "responses": {
@@ -1122,36 +1218,7 @@
             }
           },
           "401": {
-            "description": "No user, or an unknown user."
-          }
-        }
-      }
-    },
-    "/api/users/me": {
-      "get": {
-        "operationId": "getMe",
-        "tags": [
-          "users"
-        ],
-        "summary": "The signed-in user, with their role and permissions",
-        "security": [
-          {
-            "devUser": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The signed-in user.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Me"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No user, or an unknown user."
+            "description": "Not signed in, or the session expired."
           }
         }
       }

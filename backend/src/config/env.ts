@@ -9,6 +9,8 @@ const envSchema = z.object({
     .default('info'),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.url(),
+  // Signs the session tokens. At least 32 characters.
+  SESSION_SECRET: z.string().min(32),
 })
 
 const parsed = envSchema.safeParse(process.env)

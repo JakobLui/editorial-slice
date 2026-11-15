@@ -25,13 +25,13 @@ After a change to a `package.json`, run `docker compose up --build` again.
 
 ### Sample data
 
-On first start, the backend fills the empty database with three users and six content items in different statuses, one of them archived (`backend/src/database/seed.ts`).
+On first start, the backend fills the empty database with three users and six content items in different statuses, one of them archived (`backend/src/database/seed.ts`). Every user signs in with the password `editorial`.
 
-| User          | Email                      | Role        |
-| ------------- | -------------------------- | ----------- |
-| Mette Hansen  | `mette@frihedsbrevet.test` | editor      |
-| Jonas Nielsen | `jonas@frihedsbrevet.test` | contributor |
-| Sara Larsen   | `sara@frihedsbrevet.test`  | contributor |
+| User          | Email                      | Password    | Role        |
+| ------------- | -------------------------- | ----------- | ----------- |
+| Mette Hansen  | `mette@frihedsbrevet.test` | `editorial` | editor      |
+| Jonas Nielsen | `jonas@frihedsbrevet.test` | `editorial` | contributor |
+| Sara Larsen   | `sara@frihedsbrevet.test`  | `editorial` | contributor |
 
 To start over with fresh sample data, delete the database volume:
 
@@ -48,7 +48,7 @@ This is a case-sized slice, not a production setup.
 
 - **Creator and authors are separate.** I assumed that someone other than the creator can write an item, and that a contributor added to authors should also have access to the tracked item.
 - **Authors are internal users.** I assumed that the `authors` field is used to delegate responsibility, so it links users in the system, rather than a list of free text names.
-- **Roles are fixed.** I assumed that creating or editing roles while the app runs will not be a future feature, so `role` is a column on the user (`editor` or `contributor`), not a table. Each role's permissions are a map in code (`backend/src/auth/permissions.ts`); moving it into tables later only changes where it is loaded from.
+- **Roles are fixed.** I assumed that creating or editing roles while the app runs will not be a future feature, so `role` is a column on the user (`editor` or `contributor`), not a table. Each role's permissions are a map in code (`backend/src/auth/auth.permissions.ts`); moving it into tables later only changes where it is loaded from.
 - **Published items are locked to editors.** I assumed Published records that a piece is live, so only editors can publish or unpublish, and only editors can change a published item. Otherwise unpublished items could end up listed as published, and vice versa.
 - **Non-publish status changes are free.** I assumed that switching status between Idea, Draft and Review on content items shouldn't follow a fixed order since you might want to move between draft and review or similar.
 - **Published items are history.** I assumed that published items stay as history, so I added a board endpoint grouped on status that only shows the in-progress status items (Idea, Draft, Review). This is to avoid either having a long list of published items or having one group with a forced date filter applied.
@@ -65,7 +65,7 @@ This is a case-sized slice, not a production setup.
 
 - **Development mode only.** The containers run the dev servers (`pnpm dev`) with live reload. There is no production build or image.
 - **No migrations.** TypeORM creates and updates the tables from the entities on every start (`synchronize: true`). A production setup would use migrations.
-- **Hardcoded credentials.** The database user and password are in `docker-compose.yml`. A production setup would read them from secrets.
+- **Hardcoded credentials.** The database user and password and the `SESSION_SECRET` that signs sessions are in `docker-compose.yml`, and the sample users share one password. A production setup would read the secrets from a secret store.
 - **Logging to stdout only.** The backend logs with Pino: readable lines in development, JSON otherwise, level set by `LOG_LEVEL`. Logs are not shipped to a log service.
 - **Basic error handling.** One error handler in `middleware/error-handler.ts` turns validation errors into 400, `AppError` into its status, and everything else into 500. There are no error codes for clients and no error tracking service.
 - **No CI.** The checks under [Checks](#checks) run locally.
@@ -74,6 +74,10 @@ This is a case-sized slice, not a production setup.
 - **Search matches titles only.** No search in briefs and no full-text search.
 - **No real-time co-editing of the brief.** If two people save the brief at once, the last save wins. A real version would add real-time co-editing (for example Tiptap with Yjs).
 - **No hard delete.** Items can only be archived. Permanent deletion could be added as a `purgeAt` column and a scheduled job that deletes rows past it.
+- **Logout does not end the session on the server.** The session is a signed token (JWT) in a cookie. Logout clears the cookie, but a copied token stays valid until it expires after 8 hours. A production setup would keep sessions in the database so they can be revoked.
+- **No login rate limiting.** Repeated failed logins are not slowed down or blocked.
+- **No CSRF token.** The session cookie is `SameSite=Lax`, so browsers don't send it with requests from other sites that change data (POST, PATCH). That alone keeps other sites from making changes as the signed-in user.
+- **Passwords are hashed with the `argon2` package.** Node's built-in `crypto.argon2()` would remove the dependency, but it is still experimental in Node 24.
 
 ## Backend layout
 
@@ -84,7 +88,9 @@ backend/src/
   server.ts          connects to the database and starts the HTTP server
   app.ts             builds the Express app and mounts the module routers
   config/env.ts      parses the environment variables with zod
-  auth/              the current user and the permission map per role
+  auth/              a module like those below (login, logout, me), plus layers other modules import:
+                     auth.middleware.ts (requireUser, currentUser), auth.session.ts (the session token
+                     and cookie), auth.cookie.ts (the cookie name) and auth.permissions.ts (permissions per role)
   database/          the TypeORM DataSource, the snake_case naming strategy and the seed
   middleware/        the 404 handler and the error handler
   errors.ts          AppError: throw it to answer with a specific HTTP status
