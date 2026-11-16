@@ -77,7 +77,7 @@ This is a case-sized slice, not a production setup.
 - **The board is capped at 500 items.** It loads all work in progress at once, which suits a small newsroom; the response says when items were left out. Lists elsewhere are paginated.
 - **Search matches titles only.** No search in briefs and no full-text search.
 - **No date filters in the UI.** The list endpoint takes deadline and published date ranges (`deadlineFrom`/`deadlineTo`, `publishedFrom`/`publishedTo`), but the Dashboard only sorts by date. Date filters could be added in the UI later; the list endpoint already supports them.
-- **No real-time co-editing of the brief.** If two people save the brief at once, the last save wins. A real version would add real-time co-editing (for example Tiptap with Yjs).
+- **Last save wins** If two people change the same field at once, the later save overwrites the earlier one. A version check on save would turn that into a conflict error.
 - **No hard delete.** Items can only be archived. Permanent deletion could be added as a `purgeAt` column and a scheduled job that deletes rows past it.
 - **Logout does not end the session on the server.** The session is a signed token (JWT) in a cookie. Logout clears the cookie, but a copied token stays valid until it expires after 8 hours. A production setup would keep sessions in the database so they can be revoked.
 - **No login rate limiting.** Repeated failed logins are not slowed down or blocked.
